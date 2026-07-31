@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEO Checklist Tracker</title>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5;font-size:13px}
+:root{
+  --blue:#005293;--blue-dark:#004278;--blue-light:#e8f1f9;
+  --amber:#f59e0b;--amber-light:#fffbeb;--amber-border:#fde68a;
+  --red:#dc2626;--red-light:#fef2f2;--red-border:#fecaca;
+  --green:#059669;--green-light:#ecfdf5;--green-border:#a7f3d0;
+  --orange:#d97706;--orange-light:#fffbeb;
+  --slate-50:#f8fafc;--slate-100:#f1f5f9;--slate-200:#e2e8f0;
+  --slate-400:#94a3b8;--slate-500:#64748b;--slate-600:#475569;
+  --slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;
+  --radius:10px;
+}
+/* TOP BAR */
+.topbar{background:var(--blue);color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow:hidden}
+.topbar-icon{width:30px;height:30px;background:var(--amber);border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:14px;color:#0f172a}
+.topbar h1{font-size:14px;font-weight:600}
+.topbar .reg-badge{margin-left:auto;font-size:11px;background:rgba(255,255,255,.12);padding:3px 10px;border-radius:6px;color:#cbd5e1}
+/* VIEW TOGGLE */
+.view-toggle{display:flex;gap:6px;margin-left:16px}
+.vtbtn{padding:5px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.7);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:.15s}
+.vtbtn.active{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4)}
+/* LAYOUT */
+.app{max-width:1400px;margin:0 auto;padding:20px 20px 80px}
+/* MANAGER BADGE */
+.manager-bar{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:12.5px}
+.manager-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-light);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--blue);flex-shrink:0}
+.manager-bar select{border:1px solid var(--slate-200);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:12.5px;background:#fff}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:14px 16px}
+.stat-clickable{cursor:pointer;transition:.15s}
+.stat-clickable:hover{border-color:var(--blue);transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,82,147,.08)}
+.stat-active{border-color:var(--blue);background:var(--blue-light)}
+.stat-active .lbl{color:var(--blue)}
+.stat-card .lbl{font-size:10px;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em}
+.stat-card .val{font-size:24px;font-weight:700;margin-top:2px;color:var(--slate-900)}
+.stat-card .sub{font-size:10px;color:var(--slate-400);margin-top:1px}
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.search-wrap{flex:1;min-width:180px;position:relative}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--slate-200);border-radius:var(--radius);font-family:inherit;font-size:12.5px;background:#fff}
+.search-wrap input:focus{outline:none;border-color:var(--blue)}
+.search-wrap::before{content:'⌕';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--slate-400);pointer-events:none}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-outline{background:#fff;border-color:var(--slate-200);color:var(--slate-700)}
+.btn-outline:hover{background:var(--slate-50)}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:7px}
+fselect{padding:8px 12px;border:1px solid var(--slate-200);border-radius:var(--radius);font-family:inherit;font-size:12.5px;background:#fff;cursor:pointer}
+select.fsel{padding:8px 12px;border:1px solid var(--slate-200);border-radius:var(--radius);font-family:inherit;font-size:12.5px;background:#fff;cursor:pointer}
+/* TABLE */
+.table-wrap{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);overflow:hidden}
+.table-header{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--slate-200);background:var(--slate-50)}
+.table-header h3{font-size:13px;font-weight:600}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--slate-50)}
+thead th{padding:9px 14px;text-align:left;font-weight:600;font-size:10px;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--slate-200);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--slate-700)}
+tbody tr{border-bottom:1px solid var(--slate-100);transition:background .1s}
+tbody tr:hover{background:#eff6ff}
+tbody tr.row-overdue{border-left:3px solid var(--red);background:#fffbfb}
+tbody tr.row-overdue:hover{background:#fef2f2}
+tbody tr.row-duesoon{border-left:3px solid var(--orange);background:#fffdf7}
+tbody tr.row-duesoon:hover{background:#fef3c7}
+tbody tr.row-inactive{opacity:.6;background:var(--slate-50)}
+tbody tr.row-inactive:hover{background:var(--slate-100);opacity:.85}
+thead th.sorted-asc::after{content:' ▲';font-size:9px;color:var(--blue)}
+thead th.sorted-desc::after{content:' ▼';font-size:9px;color:var(--blue)}
+tbody td{padding:10px 14px;color:var(--slate-700);vertical-align:middle}
+td.name-cell{font-weight:500;color:var(--slate-900)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.s-complete{background:var(--green-light);color:var(--green);border:1px solid var(--green-border)}
+.s-incomplete{background:#eff6ff;color:var(--blue);border:1px solid #bfdbfe}
+.s-overdue{background:var(--red-light);color:var(--red);border:1px solid var(--red-border)}
+.s-notrequired{background:var(--slate-100);color:var(--slate-500);border:1px solid var(--slate-200)}
+.s-presystem{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.s-prerecords{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.s-prerefresher{background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd}
+.ps-panel{background:#fff;border:1px solid var(--slate-200);border-left:4px solid #7c3aed;border-radius:10px;padding:14px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.s-duesoon{background:var(--orange-light);color:var(--orange);border:1px solid var(--amber-border)}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;background:currentColor}
+.act-btn{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;border:1px solid var(--slate-200);background:#fff;cursor:pointer;font-size:13px;transition:.12s;color:var(--slate-500)}
+.act-btn:hover{background:var(--slate-100)}
+.act-btn.complete-btn:hover{background:var(--green-light);color:var(--green);border-color:var(--green-border)}
+.act-btn.revise-btn{color:var(--orange);border-color:var(--amber-border);background:var(--orange-light)}
+.act-btn.revise-btn:hover{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn-confirm{padding:5px 11px;border-radius:6px;border:1px solid var(--green-border);background:var(--green-light);color:var(--green);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-confirm:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.act-btn.del:hover{background:var(--red-light);color:var(--red);border-color:var(--red-border)}
+.actions-cell{display:flex;gap:4px}
+.empty-state{padding:50px 20px;text-align:center;color:var(--slate-400)}
+.empty-state .big{font-size:36px;margin-bottom:10px}
+/* MODAL */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:300;backdrop-filter:blur(3px);justify-content:center;align-items:flex-start;padding:50px 16px;overflow-y:auto}
+.backdrop.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:640px;box-shadow:0 20px 40px rgba(0,0,0,.15);animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--slate-200);display:flex;justify-content:space-between;align-items:center}
+.modal-head h2{font-size:15px;font-weight:600}
+.modal-close{width:30px;height:30px;border-radius:7px;border:none;background:var(--slate-100);cursor:pointer;font-size:17px;display:grid;place-items:center;color:var(--slate-500);transition:.12s}
+.modal-close:hover{background:var(--slate-200)}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--slate-200);display:flex;justify-content:flex-end;gap:8px;background:var(--slate-50);border-radius:0 0 14px 14px}
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;font-weight:600;color:var(--slate-600)}
+.fg label .req{color:var(--red)}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px;transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,82,147,.1)}
+.sec-title{grid-column:1/-1;font-size:11px;font-weight:600;color:var(--blue);border-bottom:1px solid var(--blue-light);padding-bottom:4px;margin-top:6px}
+/* COMPLIANCE BANNER */
+.comp-banner{margin-top:16px;border-radius:var(--radius);padding:14px 18px;font-size:12px;display:flex;gap:10px;align-items:flex-start}
+.comp-banner.ok{background:var(--green-light);border:1px solid var(--green-border);color:#065f46}
+.comp-banner.warn{background:var(--orange-light);border:1px solid var(--amber-border);color:#92400e}
+.comp-banner .ico{font-size:18px;flex-shrink:0}
+/* NEW HIRE CHIP */
+.new-chip{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;background:#dbeafe;color:#1d4ed8;margin-left:4px}
+/* PROGRESS BAR */
+.prog-bar{height:5px;background:var(--slate-200);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+/* HELP MODAL */
+.help-tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:500;color:var(--slate-500);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;margin-bottom:-1px}
+.help-tab:hover{color:var(--slate-800)}
+.help-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.help-content h3{margin-top:0}
+.help-content ul,.help-content ol{margin-bottom:8px}
+.faq-item{padding:12px 0;border-bottom:1px solid var(--slate-200)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-size:12.5px;font-weight:600;color:var(--slate-800);margin-bottom:5px}
+.faq-a{font-size:12.5px;color:var(--slate-600);line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-icon">✦</div>
+  <h1>NEO Checklist Tracker — Fraser Health</h1>
+  <div class="reg-badge">New Employee Orientation · 14-day window</div>
+</div>
+
+<div class="app">
+
+
+
+  <!-- Reg Card -->
+  <div style="background:linear-gradient(135deg,#fffbeb,#fff 40%);border:1px solid #fde68a;border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+    <div style="width:38px;height:38px;flex-shrink:0;background:#fef3c7;border-radius:10px;display:grid;place-items:center;color:#b45309;font-size:17px;font-weight:700">§</div>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:#b45309;margin-bottom:4px">Section 3.23 — Young or New Worker Orientation and Training (OHS Regulation)</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7">An employer must ensure that <strong>before a young or new worker begins work</strong>, they are given health and safety orientation and training specific to their workplace. This includes: the risks and hazards of the work and workplace; the employer's health and safety program; the location of first aid; safe work procedures; and the worker's rights and responsibilities under the <em>Workers Compensation Act</em>.</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="statsRow"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap"><input type="text" id="searchInput" placeholder="Search name, department, facility…" oninput="render()"></div>
+    <select class="fsel" id="filterSite" onchange="render()">
+      <option value="">All facilities</option>
+      <option>Abbotsford Regional Hospital</option>
+      <option>Burnaby Hospital</option>
+      <option>Chilliwack General Hospital</option>
+      <option>Delta Hospital</option>
+      <option>Langley Memorial Hospital</option>
+      <option>Mission Memorial Hospital</option>
+      <option>Peace Arch Hospital</option>
+      <option>Ridge Meadows Hospital</option>
+      <option>Royal Columbian Hospital</option>
+      <option>Surrey Memorial Hospital</option>
+    </select>
+    <select class="fsel" id="filterStatus" onchange="render()">
+      <option value="">All NEO statuses</option>
+      <option value="Action Required">Action Required</option>
+      <option value="Complete">Complete</option>
+      <option value="Incomplete">Incomplete</option>
+      <option value="Overdue">Overdue</option>
+      <option value="Due Soon">Due Soon</option>
+      <option value="Not Required">Not Required</option>
+      <option value="Pre-System Complete">Pre-System Complete</option>
+    </select>
+    <select class="fsel" id="filterEmployment" onchange="render()">
+      <option value="active">Active employees only</option>
+      <option value="inactive">Inactive employees only</option>
+      <option value="all">All (active &amp; inactive)</option>
+    </select>
+    <select class="fsel" id="filterCost" onchange="render()">
+      <option value="">All cost centres</option>
+    </select>
+    <button class="btn btn-outline" onclick="exportCSV()">↓ Export</button>
+    <button class="btn btn-outline" onclick="openHelp()" title="How this tool works">? Help</button>
+  </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <h3>Employee NEO Register</h3>
+      <span style="font-size:11px;color:var(--slate-400)" id="tblCount"></span>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('name')">Employee</th>
+            <th>Email</th>
+            <th onclick="sortBy('jobTitle')">Job Title</th>
+            <th onclick="sortBy('site')">Facility</th>
+            <th onclick="sortBy('costCentre')">Cost Centre</th>
+            <th onclick="sortBy('manager')">Manager</th>
+            <th onclick="sortBy('hireDate')">Hire Date</th>
+            <th onclick="sortBy('dueDate')">Due Date</th>
+            <th onclick="sortBy('status')">Status</th>
+            <th>File Attachment</th>
+            <th>Revise Submission</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="big">📋</div>
+      <p><strong>No employees found</strong></p>
+      <p style="margin-top:4px">Click <strong>+ Add Employee</strong> to get started.</p>
+    </div>
+  </div>
+
+
+
+</div>
+
+<!-- CLASSIFY (Pre-System) MODAL -->
+<div class="backdrop" id="classifyModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h2>Classify Pre-System Hire</h2>
+      <button class="modal-close" onclick="closeModal('classifyModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#5b21b6;line-height:1.6">
+        This employee was hired before the NEO Tracker launched (<strong>June 1, 2026</strong>). Classify their NEO record status so we can track legacy compliance accurately.
+      </div>
+      <p style="font-size:12.5px;color:var(--slate-700);font-weight:600;margin-bottom:8px">Classifying: <span id="clName" style="color:#7c3aed"></span></p>
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--slate-200);border-radius:8px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#7c3aed':'var(--slate-200)'">
+          <input type="radio" name="clAction" value="records" style="margin-top:2px" onchange="updateClassifyChoice()">
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--slate-800)">Records on File</div>
+            <div style="font-size:11.5px;color:var(--slate-500);margin-top:2px">Orientation was completed and a signed checklist exists in paper records or a legacy system.</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--slate-200);border-radius:8px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#7c3aed':'var(--slate-200)'">
+          <input type="radio" name="clAction" value="refresher" style="margin-top:2px" onchange="updateClassifyChoice()">
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--slate-800)">Pending Refresher</div>
+            <div style="font-size:11.5px;color:var(--slate-500);margin-top:2px">No records found, or refresher orientation is required (role change, time elapsed, or risk profile).</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="fg" id="clRecordsLocWrap" style="display:none;margin-bottom:12px">
+        <label style="font-size:11px;font-weight:600;color:var(--slate-600);display:block;margin-bottom:4px">Records Location</label>
+        <input type="text" id="clRecordsLoc" placeholder="e.g., Site HR Office, Drawer 3 — or — Legacy LMS Archive" style="width:100%;padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px">
+      </div>
+
+      <div class="fg">
+        <label style="font-size:11px;font-weight:600;color:var(--slate-600);display:block;margin-bottom:4px">Notes (optional)</label>
+        <textarea id="clNotes" rows="2" placeholder="Any additional context…" style="width:100%;padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('classifyModal')">Cancel</button>
+      <button class="btn btn-primary" id="clSaveBtn" onclick="saveClassification()" disabled style="background:#7c3aed">Save Classification</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="backdrop" id="helpModal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-head">
+      <h2>Help &amp; Guidance</h2>
+      <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--slate-200);margin-bottom:18px;flex-wrap:wrap">
+        <button class="help-tab active" data-tab="overview" onclick="setHelpTab(this)">Overview</button>
+        <button class="help-tab" data-tab="getting-started" onclick="setHelpTab(this)">Getting Started</button>
+        <button class="help-tab" data-tab="submitting" onclick="setHelpTab(this)">Submitting a Checklist</button>
+        <button class="help-tab" data-tab="status" onclick="setHelpTab(this)">Status Definitions</button>
+        <button class="help-tab" data-tab="regulation" onclick="setHelpTab(this)">Regulation</button>
+        <button class="help-tab" data-tab="faq" onclick="setHelpTab(this)">FAQ</button>
+      </div>
+
+      <!-- Overview -->
+      <div class="help-content" id="help-overview">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">What is the NEO Checklist Tracker?</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">The New Employee Orientation (NEO) Checklist Tracker is a tool that helps Fraser Health managers and administrators track health and safety orientation completion for new and young workers, in compliance with WorkSafeBC OHS Regulation §3.23.</p>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Key Features</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+          <li><strong>Two views:</strong> Admin view shows all employees across all facilities. Manager view filters to your direct reports by cost centre.</li>
+          <li><strong>Automatic 14-day tracking:</strong> Due dates are calculated 14 days from the hire date with automatic overdue flagging.</li>
+          <li><strong>Live dashboard:</strong> Click any stat card (Total, Complete, Overdue, Due Soon, Incomplete) to instantly filter the list.</li>
+          <li><strong>Visual urgency cues:</strong> Overdue rows have a red border, due-soon rows have an orange border, and inline text shows days remaining or days overdue.</li>
+          <li><strong>Required file upload:</strong> Submitting a completed checklist requires attaching the signed document.</li>
+          <li><strong>Export:</strong> Download the full register as CSV for reporting or audits.</li>
+        </ul>
+      </div>
+
+      <!-- Getting Started -->
+      <div class="help-content" id="help-getting-started" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">For Managers</h3>
+        <ol style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.9">
+          <li>Switch to <strong>Manager View</strong> using the toggle in the top bar.</li>
+          <li>Select your name from the dropdown — the list filters to employees in your cost centre.</li>
+          <li>Review the dashboard for any <span style="color:var(--red);font-weight:500">Overdue</span> or <span style="color:var(--orange);font-weight:500">Due Soon</span> alerts.</li>
+          <li>For each pending employee, click the <strong style="color:var(--green)">✓</strong> button to submit their completed checklist.</li>
+          <li>Upload the signed checklist file and confirm the completion date.</li>
+        </ol>
+        <h3 style="font-size:14px;font-weight:600;margin:18px 0 8px;color:var(--slate-800)">For Admins</h3>
+        <ol style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.9">
+          <li>Use <strong>Admin View</strong> to see all employees across all facilities.</li>
+          <li>Filter by facility, status, or cost centre using the dropdowns.</li>
+          <li>Click stat cards to quickly see overdue or due-soon employees across the organization.</li>
+          <li>Use the <strong>Export</strong> button to generate a CSV for compliance reporting.</li>
+        </ol>
+      </div>
+
+      <!-- Submitting -->
+      <div class="help-content" id="help-submitting" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">How to Submit a Completed NEO Checklist</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">Submission requires both a completion date and an uploaded checklist file.</p>
+        <div style="background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--slate-800);margin-bottom:6px">Step-by-step</div>
+          <ol style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+            <li>Find the employee in the table.</li>
+            <li>Click the green <strong>✓</strong> button in the Actions column.</li>
+            <li>Enter the date the orientation was completed.</li>
+            <li>Upload the signed checklist (drag &amp; drop or click to browse).</li>
+            <li>Add any notes about the orientation if needed.</li>
+            <li>Click <strong>Submit Completion</strong>.</li>
+          </ol>
+        </div>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Accepted File Types</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:8px">PDF, DOC, DOCX, JPG, PNG. Recommended naming: <code style="background:var(--slate-100);padding:1px 6px;border-radius:4px;font-size:11.5px">NEO_LastName_YYYY-MM-DD.pdf</code></p>
+        <div style="background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e">
+          <strong>⚠ Important:</strong> Once submitted, the system records this as the official completion. Contact the Health &amp; Safety team if you need to revise a submission.
+        </div>
+      </div>
+
+      <!-- Status Definitions -->
+      <div class="help-content" id="help-status" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--slate-800)">Status Definitions</h3>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;width:120px;vertical-align:top"><span class="status-badge s-complete">✓ Complete</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Employee has completed orientation and a signed checklist has been uploaded to the system.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-incomplete">● Incomplete</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Orientation has not yet been completed. Within the 14-day window, more than 3 days remain.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-duesoon">◉ Due Soon</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Within 3 days of the 14-day deadline. Action recommended.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-overdue">⚠ Overdue</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">More than 14 days have passed since the hire date and no checklist has been submitted. <strong style="color:var(--red)">Compliance gap — immediate action required.</strong></td>
+          </tr>
+          <tr>
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-notrequired">— Not Required</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">NEO is not applicable for this employee (e.g., volunteer, contractor, or returning staff).</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Regulation -->
+      <div class="help-content" id="help-regulation" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--slate-800)">WorkSafeBC OHS Regulation §3.23</h3>
+        <div style="background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:14px 16px;font-size:12.5px;color:var(--slate-700);line-height:1.7;margin-bottom:14px">
+          <strong style="color:#b45309">Young or new worker orientation and training</strong><br>
+          An employer must ensure that before a young or new worker begins work in a workplace, the young or new worker is given health and safety orientation and training specific to that young or new worker's workplace.
+        </div>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Required Topics (3.23(2))</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:8px">Orientation and training must include the following:</p>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8;margin-bottom:14px">
+          <li>The name and contact information of the young or new worker's supervisor</li>
+          <li>The employer's and worker's rights and responsibilities under the Workers Compensation Act and OHS Regulation, including the right to refuse unsafe work</li>
+          <li>Workplace health and safety rules</li>
+          <li>Hazards to which the young or new worker may be exposed, including risks from robbery, assault, or confrontation</li>
+          <li>Working alone or in isolation procedures</li>
+          <li>Violence in the workplace policies and procedures</li>
+          <li>Personal protective equipment requirements</li>
+          <li>Location of first aid facilities, means of summoning first aid, and reporting injuries</li>
+          <li>Emergency procedures, including evacuation and assembly points</li>
+          <li>Instruction and demonstration of the young or new worker's work task or work process</li>
+          <li>The employer's health and safety program (if any)</li>
+          <li>WHMIS information</li>
+          <li>Contact information for the joint health and safety committee or worker health and safety representative</li>
+        </ul>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Definitions</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+          <li><strong>Young worker:</strong> A worker who is under 25 years of age.</li>
+          <li><strong>New worker:</strong> A worker new to a workplace, returning after a substantial break, affected by changes in hazards, or relocated to a new workplace.</li>
+        </ul>
+        <p style="font-size:11.5px;color:var(--slate-400);margin-top:14px;font-style:italic">For the full regulation text, visit the <a href="https://www.worksafebc.com/en/law-policy/occupational-health-safety/searchable-ohs-regulation/ohs-regulation/part-03-rights-and-responsibilities" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">WorkSafeBC OHS Regulation Part 3</a>.</p>
+      </div>
+
+      <!-- FAQ -->
+      <div class="help-content" id="help-faq" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--slate-800)">Frequently Asked Questions</h3>
+        <div class="faq-item">
+          <div class="faq-q">Why is the deadline 14 days from hire?</div>
+          <div class="faq-a">Fraser Health policy aligns with WorkSafeBC §3.23 which requires orientation <em>before</em> the worker begins work. The 14-day window provides a tracking buffer for documentation and follow-up while remaining compliant.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What if the orientation was completed before this system was set up?</div>
+          <div class="faq-a">Submit the historical date the orientation was completed and upload the signed checklist as it was originally documented. The system will record the completion against the historical date.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">My employee transferred from another department — do they need a new NEO?</div>
+          <div class="faq-a">Yes. Per §3.23, a worker is considered "new" when relocated to a workplace where the work or hazards differ from their previous workplace. A site-specific orientation is required.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I submit on behalf of another manager?</div>
+          <div class="faq-a">Admins can submit for any employee. Managers should only submit for employees within their cost centre.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What happens to overdue items?</div>
+          <div class="faq-a">Overdue items are flagged in red and counted in the compliance banner. Managers should prioritize completing overdue orientations immediately and document any reasons for delay.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I change a submission after it's been recorded?</div>
+          <div class="faq-a">No — submissions are final once recorded to maintain audit integrity. If a correction is needed, contact the Health &amp; Safety team or your local site administrator.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Where does the employee data come from?</div>
+          <div class="faq-a">Employee records are sourced from the Fraser Health HR system. New hires automatically appear in the manager's list within 24 hours of being added to HR records.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Who do I contact for help?</div>
+          <div class="faq-a">For technical issues, contact the IT Service Desk. For policy or compliance questions, contact your Workplace Health &amp; Safety advisor or email <span style="color:var(--blue)">safety@fraserhealth.ca</span>.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal('helpModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="backdrop" id="helpModal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-head">
+      <h2>Help &amp; Guidance</h2>
+      <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--slate-200);margin-bottom:18px;flex-wrap:wrap">
+        <button class="help-tab active" data-tab="overview" onclick="setHelpTab(this)">Overview</button>
+        <button class="help-tab" data-tab="confirming" onclick="setHelpTab(this)">Confirming Completion</button>
+        <button class="help-tab" data-tab="revising" onclick="setHelpTab(this)">Revising a Submission</button>
+        <button class="help-tab" data-tab="dashboard" onclick="setHelpTab(this)">Dashboard &amp; Filters</button>
+        <button class="help-tab" data-tab="status" onclick="setHelpTab(this)">Status Definitions</button>
+        <button class="help-tab" data-tab="regulation" onclick="setHelpTab(this)">Regulation</button>
+        <button class="help-tab" data-tab="faq" onclick="setHelpTab(this)">FAQ</button>
+      </div>
+
+      <!-- Overview -->
+      <div class="help-content" id="help-overview">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">What is the NEO Checklist Tracker?</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">The New Employee Orientation (NEO) Checklist Tracker helps Fraser Health managers track health and safety orientation completion for new and young workers, in compliance with WorkSafeBC OHS Regulation §3.23.</p>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Key Features</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+          <li><strong>Automatic 14-day tracking:</strong> Due dates are calculated from each employee's hire date with automatic overdue flagging.</li>
+          <li><strong>Live dashboard:</strong> Three at-a-glance stat cards (Total Employees, NEO Complete, Action Required) with the most urgent items highlighted in red.</li>
+          <li><strong>Smart sorting:</strong> The register defaults to urgency order — overdue first, then due soon, then incomplete, then complete.</li>
+          <li><strong>Visual cues:</strong> Overdue rows have a red border, due-soon rows have an orange border, so urgency is obvious at a glance.</li>
+          <li><strong>Required file upload:</strong> Confirming completion requires attaching the signed checklist document for audit purposes.</li>
+          <li><strong>Revisable submissions:</strong> Completed entries can be corrected or reverted, with all changes recorded in an audit log.</li>
+          <li><strong>Export:</strong> Download the full register as CSV for compliance reporting.</li>
+        </ul>
+      </div>
+
+      <!-- Confirming -->
+      <div class="help-content" id="help-confirming" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">How to Confirm a Completed NEO Checklist</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">Confirming completion requires both the completion date and an uploaded checklist file.</p>
+        <div style="background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--slate-800);margin-bottom:6px">Step-by-step</div>
+          <ol style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+            <li>Find the employee in the Employee NEO Register.</li>
+            <li>In the <strong>Status</strong> column, click the blue <strong>Confirm Completion</strong> link.</li>
+            <li>Enter the date the orientation was completed.</li>
+            <li>Upload the signed checklist (drag &amp; drop or click to browse).</li>
+            <li>Add any notes about the orientation if needed.</li>
+            <li>Click <strong>Confirm Completion</strong> to save.</li>
+          </ol>
+        </div>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Accepted File Types</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:8px">PDF, DOC, DOCX, JPG, PNG. Recommended naming: <code style="background:var(--slate-100);padding:1px 6px;border-radius:4px;font-size:11.5px">NEO_LastName_YYYY-MM-DD.pdf</code></p>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e">
+          <strong>⚠ Important:</strong> Once confirmed, the system records this as the official completion. Use the Revise option if a correction is needed.
+        </div>
+      </div>
+
+      <!-- Revising -->
+      <div class="help-content" id="help-revising" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--slate-800)">How to Revise a Completed Submission</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">If you confirmed a completion in error or need to update the details, the revise feature lets you correct the record. All revisions are audit-tracked.</p>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Two Revision Options</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8;margin-bottom:12px">
+          <li><strong>Correct details only</strong> — fix a wrong date or replace the uploaded file. The submission remains marked Complete.</li>
+          <li><strong>Revert to incomplete</strong> — undo the submission entirely. The 14-day clock resumes from the hire date, and the row may immediately flag as Overdue if too much time has passed.</li>
+        </ul>
+        <div style="background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--slate-800);margin-bottom:6px">Step-by-step</div>
+          <ol style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+            <li>Find the completed employee in the register.</li>
+            <li>Click the orange <strong>↺</strong> icon in the Revise Submission column.</li>
+            <li>Review the current submission details and the audit-tracked warning.</li>
+            <li>Select either <strong>Correct details only</strong> or <strong>Revert to incomplete</strong>.</li>
+            <li>Tick the acknowledgment checkbox confirming you understand the change is logged.</li>
+            <li>Provide a reason for the revision (required for audit purposes).</li>
+            <li>For Revert, confirm a second time on the red warning panel.</li>
+          </ol>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;font-size:12px;color:#7f1d1d">
+          <strong>⚠ All revisions are permanently logged</strong> with timestamp, previous values, new values, and the reason provided. This protects audit integrity.
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="help-content" id="help-dashboard" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--slate-800)">Dashboard Stats</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:12px">Three stat cards summarize your register. Each is clickable — clicking a card filters the table to that group.</p>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-bottom:14px">
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;width:160px;vertical-align:top"><strong>Total Employees</strong></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Full count of employees in your register. Click to clear filters and see everyone.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><strong>NEO Complete</strong></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Headline percentage of employees who have completed their NEO checklist, with a progress bar and "X of Y complete" detail. Click to filter to completed employees only.</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 8px;vertical-align:top"><strong>Action Required</strong></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Count of all employees who need action — Overdue, Due Soon, or Incomplete (within the 14-day window). Below the number, the overdue count is highlighted in red. Click to filter to employees needing action.</td>
+          </tr>
+        </table>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Filters &amp; Search</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+          <li><strong>Search box:</strong> Type any part of a name, job title, facility, manager, or cost centre.</li>
+          <li><strong>All facilities:</strong> Filter by hospital site.</li>
+          <li><strong>All statuses:</strong> Filter by status (including "Action Required" which combines Overdue, Due Soon, and Incomplete).</li>
+          <li><strong>All cost centres:</strong> Filter by cost centre code.</li>
+          <li><strong>Column sorting:</strong> Click any column header to sort. Click again to reverse direction.</li>
+        </ul>
+      </div>
+
+      <!-- Status Definitions -->
+      <div class="help-content" id="help-status" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--slate-800)">Status Definitions</h3>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;width:120px;vertical-align:top"><span class="status-badge s-complete">✓ Complete</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Employee has completed orientation and a signed checklist has been uploaded.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-incomplete">● Incomplete</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Orientation has not yet been confirmed. Within the 14-day window with more than 3 days remaining.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-duesoon">◉ Due Soon</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">Within 3 days of the 14-day deadline. Row is highlighted with an orange border.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--slate-200)">
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-overdue">⚠ Overdue</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">More than 14 days have passed since the hire date without a confirmed checklist. <strong style="color:var(--red)">Compliance gap — immediate action required.</strong> Row is highlighted with a red border.</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 8px;vertical-align:top"><span class="status-badge s-notrequired">— Not Required</span></td>
+            <td style="padding:10px 8px;color:var(--slate-600)">NEO is not applicable for this employee (e.g., volunteer, contractor, or returning staff).</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Regulation -->
+      <div class="help-content" id="help-regulation" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--slate-800)">WorkSafeBC OHS Regulation §3.23</h3>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;font-size:12.5px;color:var(--slate-700);line-height:1.7;margin-bottom:14px">
+          <strong style="color:#b45309">Young or new worker orientation and training</strong><br>
+          An employer must ensure that before a young or new worker begins work in a workplace, the young or new worker is given health and safety orientation and training specific to that young or new worker's workplace.
+        </div>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Required Topics (3.23(2))</h3>
+        <p style="font-size:12.5px;color:var(--slate-600);margin-bottom:8px">Orientation and training must include the following:</p>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8;margin-bottom:14px">
+          <li>The name and contact information of the worker's supervisor</li>
+          <li>The employer's and worker's rights and responsibilities under the Workers Compensation Act and OHS Regulation, including the right to refuse unsafe work</li>
+          <li>Workplace health and safety rules</li>
+          <li>Hazards to which the worker may be exposed, including risks from robbery, assault, or confrontation</li>
+          <li>Working alone or in isolation procedures</li>
+          <li>Violence in the workplace policies and procedures</li>
+          <li>Personal protective equipment requirements</li>
+          <li>Location of first aid facilities, means of summoning first aid, and reporting injuries</li>
+          <li>Emergency procedures, including evacuation and assembly points</li>
+          <li>Instruction and demonstration of the worker's work task or work process</li>
+          <li>The employer's health and safety program (if any)</li>
+          <li>WHMIS information</li>
+          <li>Contact information for the joint health and safety committee or worker H&amp;S representative</li>
+        </ul>
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate-800)">Definitions</h3>
+        <ul style="font-size:12.5px;color:var(--slate-600);padding-left:20px;line-height:1.8">
+          <li><strong>Young worker:</strong> A worker who is under 25 years of age.</li>
+          <li><strong>New worker:</strong> A worker new to a workplace, returning after a substantial break, affected by changes in hazards, or relocated to a new workplace.</li>
+        </ul>
+        <p style="font-size:11.5px;color:var(--slate-400);margin-top:14px;font-style:italic">For the full regulation text, visit the <a href="https://www.worksafebc.com/en/law-policy/occupational-health-safety/searchable-ohs-regulation/ohs-regulation/part-03-rights-and-responsibilities" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">WorkSafeBC OHS Regulation Part 3</a>.</p>
+      </div>
+
+      <!-- FAQ -->
+      <div class="help-content" id="help-faq" style="display:none">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--slate-800)">Frequently Asked Questions</h3>
+        <div class="faq-item">
+          <div class="faq-q">Why is the deadline 14 days from hire?</div>
+          <div class="faq-a">Fraser Health policy aligns with WorkSafeBC §3.23 which requires orientation <em>before</em> the worker begins work. The 14-day window provides a tracking buffer for documentation and follow-up while remaining compliant.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What if the orientation was completed before this system was set up?</div>
+          <div class="faq-a">Confirm completion using the historical date the orientation was completed and upload the signed checklist as it was originally documented.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">My employee transferred from another department — do they need a new NEO?</div>
+          <div class="faq-a">Yes. Per §3.23, a worker is considered "new" when relocated to a workplace where the work or hazards differ from their previous workplace. A site-specific orientation is required.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What happens to overdue items?</div>
+          <div class="faq-a">Overdue items are flagged in red and counted as critical compliance gaps. Managers should prioritize completing overdue orientations immediately and document any reasons for delay.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I change a submission after it's been confirmed?</div>
+          <div class="faq-a">Yes — use the orange ↺ Revise button in the Revise Submission column. You can either correct details (date or file) or revert the submission entirely. All changes are audit-tracked.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Where does the employee data come from?</div>
+          <div class="faq-a">Employee records are sourced from the Fraser Health HR system. New hires automatically appear in the manager's list within 24 hours of being added to HR records.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Who do I contact for help?</div>
+          <div class="faq-a">For technical issues, contact the IT Service Desk. For policy or compliance questions, contact your Workplace Health &amp; Safety advisor or email <span style="color:var(--blue)">workplace.health@fraserhealth.ca</span>.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal('helpModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET CONFIRMATION MODAL -->
+<div class="backdrop" id="resetModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <h2>Reset to Demo Data?</h2>
+      <button class="modal-close" onclick="closeModal('resetModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="font-size:20px;flex-shrink:0">⚠</div>
+          <div style="font-size:12.5px;color:#7f1d1d;line-height:1.6">
+            <strong style="color:#991b1b">This action cannot be undone.</strong><br>
+            All current employee records, completed submissions, and revision history will be erased and replaced with the original sample data.
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:var(--slate-600)">Use this to refresh the demo with clean test data, or to start over from scratch.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn" style="background:var(--red);color:#fff" onclick="confirmReset()">Yes, Reset Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVISE MODAL -->
+<div class="backdrop" id="reviseModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h2 id="reviseTitle">Revise Submission</h2>
+      <button class="modal-close" onclick="closeModal('reviseModal')">✕</button>
+    </div>
+    <div class="modal-body" id="reviseBody">
+
+      <!-- STEP 1: Warning -->
+      <div id="reviseStep1">
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px 18px;margin-bottom:16px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="font-size:22px;flex-shrink:0">⚠</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#991b1b;margin-bottom:6px">Audit-Tracked Change</div>
+              <div style="font-size:12px;color:#7f1d1d;line-height:1.7">Revising a completed submission modifies the official compliance record. This action will be logged with your name, the original values, and the time of revision.</div>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12.5px;color:var(--slate-700);font-weight:600;margin-bottom:8px">Current submission for <span id="rvName" style="color:var(--blue)"></span>:</p>
+        <div style="background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--slate-700);margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:6px 10px">
+            <div style="color:var(--slate-500)">Date completed:</div><div id="rvCurDate" style="font-weight:500"></div>
+            <div style="color:var(--slate-500)">Checklist file:</div><div id="rvCurFile" style="font-weight:500;word-break:break-all"></div>
+            <div style="color:var(--slate-500)">Submitted on:</div><div id="rvCurSubmit" style="font-weight:500"></div>
+          </div>
+        </div>
+
+        <p style="font-size:12.5px;color:var(--slate-700);font-weight:600;margin-bottom:8px">Choose an action:</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border:1px solid var(--slate-200);border-radius:8px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'var(--blue)':'var(--slate-200)'">
+            <input type="radio" name="rvAction" value="correct" style="margin-top:2px" onchange="updateReviseChoice()">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--slate-800)">Correct details only</div>
+              <div style="font-size:11.5px;color:var(--slate-500);margin-top:2px">Fix the date or replace the uploaded file. Status remains Complete.</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border:1px solid var(--slate-200);border-radius:8px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'var(--red)':'var(--slate-200)'">
+            <input type="radio" name="rvAction" value="revert" style="margin-top:2px" onchange="updateReviseChoice()">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--slate-800)">Revert to incomplete</div>
+              <div style="font-size:11.5px;color:var(--slate-500);margin-top:2px">Mark this submission as not completed. The 14-day clock resumes from the original hire date.</div>
+            </div>
+          </label>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:7px;cursor:pointer">
+          <input type="checkbox" id="rvAckBox" style="margin-top:2px" onchange="document.getElementById('rvContinueBtn').disabled = !this.checked || !document.querySelector('input[name=rvAction]:checked')">
+          <span style="font-size:11.5px;color:#92400e;line-height:1.6">I understand this revision will be recorded in the audit log and is visible to administrators.</span>
+        </label>
+      </div>
+
+      <!-- STEP 2: Correction Form (hidden initially) -->
+      <div id="reviseStep2" style="display:none">
+        <div style="background:var(--blue-light);border:1px solid #bfdbfe;border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:12px;color:#1e40af">
+          Update the fields below. The previous values will be preserved in the audit history.
+        </div>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="fg"><label>Date Completed <span class="req">*</span></label><input type="date" id="rvDate"></div>
+          <div class="fg">
+            <label>Replace Checklist File</label>
+            <div id="rvDropZone" style="border:2px dashed var(--slate-200);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:.15s;background:var(--slate-50)" onclick="document.getElementById('rvFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='var(--blue-light)'" ondragleave="this.style.borderColor='var(--slate-200)';this.style.background='var(--slate-50)'" ondrop="handleReviseDrop(event)">
+              <div style="font-size:20px;margin-bottom:4px">📄</div>
+              <div style="font-size:12px;font-weight:500;color:var(--slate-700)">Click to browse or drag &amp; drop</div>
+              <div style="font-size:10.5px;color:var(--slate-400);margin-top:2px">Optional — leave blank to keep current file</div>
+            </div>
+            <input type="file" id="rvFileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display:none" onchange="handleReviseFileSelect(event)">
+            <div id="rvFilePreview" style="display:none;margin-top:8px;padding:8px 12px;background:var(--green-light);border:1px solid var(--green-border);border-radius:7px;align-items:center;gap:8px;font-size:12px;color:#065f46">
+              <span style="font-size:15px">✓</span>
+              <span id="rvFileName" style="font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+              <span id="rvFileSize" style="color:#047857;flex-shrink:0"></span>
+              <button onclick="clearReviseFile()" style="background:none;border:none;cursor:pointer;color:#065f46;font-size:14px;padding:0 2px">✕</button>
+            </div>
+          </div>
+          <div class="fg"><label>Reason for Revision <span class="req">*</span></label><textarea id="rvReason" rows="3" placeholder="Briefly describe why this submission is being revised (required for audit log)…" style="padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px;resize:vertical"></textarea></div>
+        </div>
+      </div>
+
+      <!-- STEP 2 ALT: Revert Confirmation (hidden initially) -->
+      <div id="reviseStep2Revert" style="display:none">
+        <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:10px;padding:18px 20px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700;color:#991b1b;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚠</span> Confirm Revert to Incomplete</div>
+          <div style="font-size:12px;color:#7f1d1d;line-height:1.7">This will:</div>
+          <ul style="font-size:12px;color:#7f1d1d;padding-left:22px;margin-top:6px;line-height:1.7">
+            <li>Remove the completion date and uploaded file from the active record</li>
+            <li>Reset the employee's status based on the 14-day window from hire date</li>
+            <li>Likely trigger an <strong>Overdue</strong> flag if the window has passed</li>
+            <li>Be permanently logged in the audit history</li>
+          </ul>
+        </div>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="fg"><label>Reason for Revert <span class="req">*</span></label><textarea id="rvRevertReason" rows="3" placeholder="Required: explain why this submission is being reverted (e.g., wrong employee, fraudulent submission, etc.)…" style="padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px;resize:vertical"></textarea></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot" id="reviseFoot">
+      <button class="btn btn-outline" onclick="closeModal('reviseModal')">Cancel</button>
+      <button class="btn btn-primary" id="rvContinueBtn" onclick="reviseStepTwo()" disabled>Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="backdrop" id="empModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Add Employee</h2>
+      <button class="modal-close" onclick="closeModal('empModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="sec-title">Employee Information</div>
+        <div class="fg"><label>First Name <span class="req">*</span></label><input type="text" id="fFirst" placeholder="Jane"></div>
+        <div class="fg"><label>Last Name <span class="req">*</span></label><input type="text" id="fLast" placeholder="Smith"></div>
+        <div class="fg"><label>Job Title <span class="req">*</span></label><input type="text" id="fJobTitle" placeholder="Registered Nurse"></div>
+        <div class="fg"><label>Email</label><input type="email" id="fEmail" placeholder="jsmith@fraserhealth.ca"></div>
+        <div class="sec-title">Location &amp; Assignment</div>
+        <div class="fg"><label>Facility <span class="req">*</span></label>
+          <select id="fSite">
+            <option value="">Select facility…</option>
+            <option>Abbotsford Regional Hospital</option><option>Burnaby Hospital</option>
+            <option>Chilliwack General Hospital</option><option>Delta Hospital</option>
+            <option>Langley Memorial Hospital</option><option>Mission Memorial Hospital</option>
+            <option>Peace Arch Hospital</option><option>Ridge Meadows Hospital</option>
+            <option>Royal Columbian Hospital</option><option>Surrey Memorial Hospital</option>
+          </select>
+        </div>
+        <div class="fg"><label>Cost Centre <span class="req">*</span></label><input type="text" id="fDept" placeholder="CC-4210"></div>
+        <div class="fg"><label>Manager <span class="req">*</span></label><input type="text" id="fManager" placeholder="John Brown" list="mgr-list"><datalist id="mgr-list"></datalist></div>
+        <div class="fg"><label>Cost Centre <span class="req">*</span></label><input type="text" id="fCost" placeholder="CC-4210"></div>
+        <div class="sec-title">Dates</div>
+        <div class="fg"><label>Hire Date <span class="req">*</span></label><input type="date" id="fHireDate"></div>
+        <div class="fg"><label>NEO Status</label>
+          <select id="fStatus">
+            <option value="Incomplete">Incomplete</option>
+            <option value="Complete">Complete</option>
+            <option value="Not Required">Not Required</option>
+          </select>
+        </div>
+        <div class="fg"><label>Date Completed (if complete)</label><input type="date" id="fCompletedDate"></div>
+        <div class="fg"><label>Checklist File Name / Reference</label><input type="text" id="fFileRef" placeholder="NEO_JSmith_2025-04-15.pdf"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('empModal')">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveEmployee()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE MODAL -->
+<div class="backdrop" id="completeModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <h2>Confirm NEO Completion</h2>
+      <button class="modal-close" onclick="closeModal('completeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px;color:var(--slate-600)">Confirming completion for: <strong id="cmpName"></strong></p>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="fg"><label>Date Completed <span class="req">*</span></label><input type="date" id="cmpDate"></div>
+        <div class="fg">
+          <label>Upload Completed Checklist <span class="req">*</span></label>
+          <div id="dropZone" style="border:2px dashed var(--slate-200);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:.15s;background:var(--slate-50)" onclick="document.getElementById('cmpFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div style="font-size:22px;margin-bottom:6px">📄</div>
+            <div style="font-size:12.5px;font-weight:500;color:var(--slate-700)" id="dropLabel">Click to browse or drag &amp; drop</div>
+            <div style="font-size:11px;color:var(--slate-400);margin-top:3px">PDF, DOC, DOCX, JPG, PNG accepted</div>
+          </div>
+          <input type="file" id="cmpFileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelect(event)">
+          <div id="filePreview" style="display:none;margin-top:8px;padding:8px 12px;background:var(--green-light);border:1px solid var(--green-border);border-radius:7px;display:flex;align-items:center;gap:8px;font-size:12px;color:#065f46">
+            <span style="font-size:15px">✓</span>
+            <span id="fileName" style="font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+            <span id="fileSize" style="color:#047857;flex-shrink:0"></span>
+            <button onclick="clearFile()" style="background:none;border:none;cursor:pointer;color:#065f46;font-size:14px;padding:0 2px" title="Remove file">✕</button>
+          </div>
+        </div>
+        <div class="fg"><label>Notes</label><textarea id="cmpNotes" rows="3" placeholder="Any additional notes…" style="padding:8px 11px;border:1px solid var(--slate-200);border-radius:8px;font-family:inherit;font-size:12.5px;resize:vertical"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('completeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCompletion()">Confirm Completion</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = 14;
+const LAUNCH_DATE = '2026-06-01'; // Pre-system cutoff
+let db = JSON.parse(localStorage.getItem('neo_tracker_v15') || '[]');
+let view = 'admin';
+let activeMgr = '';
+let editIdx = -1;
+let cmpIdx = -1;
+let sortCol = '';
+let sortDir = 'asc';
+const URGENCY_ORDER = {'Overdue':0,'Due Soon':1,'Incomplete':2,'Complete':3,'Not Required':4};
+
+function persist(){ localStorage.setItem('neo_tracker_v15', JSON.stringify(db)); }
+
+function addDays(dateStr, n){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+function getStatus(emp){
+  if(emp.status === 'Not Required') return 'Not Required';
+  if(emp.status === 'Pre-System Complete') return 'Pre-System Complete';
+  if(emp.status === 'Complete') return 'Complete';
+  if(!emp.hireDate) return 'Incomplete';
+  // Auto-classify employees hired before launch date as Pre-System Complete
+  if(emp.hireDate < LAUNCH_DATE) return 'Pre-System Complete';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(emp.dueDate+'T00:00:00');
+  if(today > due) return 'Overdue';
+  const diff = Math.ceil((due - today)/(1000*60*60*24));
+  if(diff <= 3) return 'Due Soon';
+  return 'Incomplete';
+}
+
+function getTenureYears(hireDate){
+  if(!hireDate) return 0;
+  const today = new Date();
+  const h = new Date(hireDate+'T00:00:00');
+  return Math.floor((today - h)/(1000*60*60*24*365.25));
+}
+
+function statusBadge(s){
+  const map = {
+    'Complete':'s-complete ✓ Complete',
+    'Incomplete':'s-incomplete ● Incomplete',
+    'Overdue':'s-overdue ⚠ Overdue',
+    'Due Soon':'s-duesoon ◉ Due Soon',
+    'Not Required':'s-notrequired — Not Required',
+    'Pre-System Complete':'s-presystem ⏳ Pre-System Complete'
+  };
+  const parts = (map[s]||'s-incomplete ● '+s).split(' ');
+  const cls = parts.shift();
+  return `<span class="status-badge ${cls}">${parts.join(' ')}</span>`;
+}
+
+function fmtDate(d){ if(!d) return '—'; const p=d.split('-'); return `${p[1]}/${p[2]}/${p[0]}`; }
+function esc(s){ const div=document.createElement('div');div.textContent=s||'';return div.innerHTML; }
+function initials(n){ return (n||'?').split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2); }
+
+function getDaysUntilDue(emp){
+  if(!emp.dueDate) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(emp.dueDate+'T00:00:00');
+  return Math.ceil((due-today)/(1000*60*60*24));
+}
+
+function capEmail(first, last){
+  const cap = s => s ? s.split('-').map(p=>p.charAt(0).toUpperCase()+p.slice(1)).join('-') : '';
+  return `${cap(first)}.${cap(last)}@fraserhealth.ca`;
+}
+
+function isNew(hireDate){
+  if(!hireDate) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const h = new Date(hireDate+'T00:00:00');
+  return Math.ceil((today-h)/(1000*60*60*24)) <= 30;
+}
+
+/* ── Render ── */
+function render(){
+  buildCostFilter();
+
+  let data = db.map((e,i)=>({...e, _idx:i, _status:getStatus(e)}));
+
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sf = document.getElementById('filterSite').value;
+  const stf = document.getElementById('filterStatus').value;
+
+  const empFilter = document.getElementById('filterEmployment') ? document.getElementById('filterEmployment').value : 'active';
+  if(empFilter === 'active') data = data.filter(e=>(e.employmentStatus||'Active')==='Active');
+  else if(empFilter === 'inactive') data = data.filter(e=>(e.employmentStatus||'Active')==='Inactive');
+
+  if(q) data = data.filter(e=>[e.firstName,e.lastName,e.jobTitle,e.site,e.costCentre,e.manager].join(' ').toLowerCase().includes(q));
+  if(sf) data = data.filter(e=>e.site===sf);
+  if(stf){
+    if(stf==='Action Required') data = data.filter(e=>['Overdue','Due Soon','Incomplete'].includes(e._status));
+    else data = data.filter(e=>e._status===stf);
+  }
+  const costEl = document.getElementById('filterCost');
+  const cf = costEl ? costEl.value : '';
+  if(cf) data = data.filter(e=>e.costCentre===cf);
+
+  if(sortCol) data.sort((a,b)=>{
+    let va=(a[sortCol]||'').toString().toLowerCase(), vb=(b[sortCol]||'').toString().toLowerCase();
+    return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+  });
+  else {
+    // Default: sort by urgency (Overdue → Due Soon → Incomplete → Complete → Not Required), then by due date ascending
+    data.sort((a,b)=>{
+      const ua = URGENCY_ORDER[a._status] ?? 99;
+      const ub = URGENCY_ORDER[b._status] ?? 99;
+      if(ua !== ub) return ua - ub;
+      return (a.dueDate||'').localeCompare(b.dueDate||'');
+    });
+  }
+
+  // Stats (Active employees only for primary stats)
+  const src = db.filter(e=>(e.employmentStatus||'Active')==='Active');
+  const nonPreSystem = src.filter(e=>!e._status || (e._status.indexOf('Pre-System')!==0 && getStatus(e).indexOf('Pre-System')!==0));
+  const preSystemEmployees = src.filter(e=>getStatus(e).indexOf('Pre-System')===0);
+  const total=nonPreSystem.length, complete=nonPreSystem.filter(e=>getStatus(e)==='Complete').length,
+    overdue=nonPreSystem.filter(e=>getStatus(e)==='Overdue').length,
+    dueSoon=nonPreSystem.filter(e=>getStatus(e)==='Due Soon').length,
+    incomplete=nonPreSystem.filter(e=>getStatus(e)==='Incomplete').length;
+  const actionNeeded = overdue + dueSoon + incomplete;
+  const pct = total>0 ? Math.round(complete/total*100) : 0;
+  const curStatusFilter = document.getElementById('filterStatus').value;
+  const isActionView = curStatusFilter==='Action Required';
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card stat-clickable ${curStatusFilter===''?'stat-active':''}" onclick="applyStatFilter('')">
+      <div class="lbl">Total Employees</div>
+      <div class="val">${total}</div>
+      <div class="sub">click to view all</div>
+    </div>
+    <div class="stat-card stat-clickable ${curStatusFilter==='Complete'?'stat-active':''}" onclick="applyStatFilter('Complete')">
+      <div class="lbl">NEO Complete</div>
+      <div class="val" style="color:var(--green)">${pct}<span style="font-size:16px;color:var(--slate-400);font-weight:500">%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="sub">${complete} of ${total} complete</div>
+    </div>
+    <div class="stat-card stat-clickable ${isActionView?'stat-active':''}" onclick="applyStatFilter('Action Required')">
+      <div class="lbl">Action Required</div>
+      <div class="val" style="color:${actionNeeded>0?'var(--red)':'var(--slate-400)'}">${actionNeeded}</div>
+      <div class="sub" style="margin-top:3px">
+        ${overdue>0?`<span style="color:var(--red);font-weight:600">${overdue} overdue</span>`:'<span style="color:var(--green);font-weight:600">0 overdue</span>'}
+      </div>
+    </div>
+  `;
+
+  // Pre-System Complete panel removed
+  const psPanel = document.getElementById('preSystemPanel');
+  if(psPanel) psPanel.style.display = 'none';
+
+  // Sort indicators on headers
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+    const onclick = th.getAttribute('onclick')||'';
+    const m = onclick.match(/sortBy\('(\w+)'\)/);
+    if(m && m[1]===sortCol) th.classList.add(sortDir==='asc'?'sorted-asc':'sorted-desc');
+  });
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  if(data.length===0){ tbody.innerHTML=''; empty.style.display='block'; }
+  else {
+    empty.style.display='none';
+    tbody.innerHTML = data.map(e=>{
+      const dd = getDaysUntilDue(e);
+      const dueDisp = e._status==='Complete' ? '<span style="color:var(--slate-400)">—</span>' :
+        e._status==='Overdue' ? `<span style="color:var(--red);font-weight:500">${fmtDate(e.dueDate)}</span>` :
+        dd!==null ? `<span style="color:${dd<=3?'var(--orange)':'var(--slate-700)'}>${fmtDate(e.dueDate)}</span>` : '—';
+      const fileCell = e.completedFile ? `<span style="font-size:11px;color:var(--blue)">📄 ${esc(e.completedFile)}</span>` : '<span style="color:var(--slate-400);font-size:11px">—</span>';
+      const newBadge = isNew(e.hireDate) ? '<span class="new-chip">NEW</span>' : '';
+      return `<tr>
+        <td class="name-cell">${esc(e.firstName+' '+e.lastName)}</td>
+        <td>${esc(e.jobTitle||'—')}</td>
+        <td style="font-size:11.5px">${esc(e.site||'—')}</td>
+      <td style="font-size:11.5px;font-family:monospace">${esc(e.costCentre||'—')}</td>
+        <td style="font-size:11.5px">${esc(e.manager||'—')}</td>
+        <td>${fmtDate(e.hireDate)}</td>
+        <td>${dueDisp}</td>
+        <td>${statusBadge(e._status)}</td>
+        <td>${fileCell}</td>
+        <td><div class="actions-cell">
+          ${e._status!=='Complete'&&e._status!=='Not Required'?`<button class="btn-confirm" onclick="openCompleteModal(${e._idx})" title="Confirm checklist completion">Confirm Completion</button>`:''}
+          ${e._status==='Complete'?`<button class="act-btn revise-btn" onclick="openReviseModal(${e._idx})" title="Revise Submission">↺</button>`:''}
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('tblCount').textContent = `${data.length} of ${db.length} employees`;
+}
+function buildCostFilter(){
+  const costs = [...new Set(db.map(e=>e.costCentre).filter(Boolean))].sort();
+  const sel = document.getElementById('filterCost');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All cost centres</option>' + costs.map(c=>`<option${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+}
+
+/* ── Sort ── */
+function sortBy(col){
+  if(sortCol===col) sortDir=sortDir==='asc'?'desc':'asc';
+  else{sortCol=col;sortDir='asc';}
+  render();
+}
+function applyStatFilter(status){
+  document.getElementById('filterStatus').value = status;
+  document.getElementById('searchInput').value = '';
+  const am = document.getElementById('actionMenu');
+  if(am) am.style.display = 'none';
+  render();
+  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function openActionMenu(e){
+  e.stopPropagation();
+  const am = document.getElementById('actionMenu');
+  if(!am) return;
+  am.style.display = am.style.display === 'block' ? 'none' : 'block';
+}
+document.addEventListener('click', e=>{
+  const am = document.getElementById('actionMenu');
+  if(am && !e.target.closest('#actionMenu') && !e.target.closest('.stat-card')) am.style.display='none';
+});
+
+/* ── Compliance ── */
+function updateCompliance(src){
+  const banner = document.getElementById('compBanner');
+  const overdue = src.filter(e=>getStatus(e)==='Overdue').length;
+  const incomplete = src.filter(e=>['Incomplete','Due Soon'].includes(getStatus(e))).length;
+  const total = src.length;
+  const pct = total>0?Math.round(src.filter(e=>getStatus(e)==='Complete').length/total*100):0;
+
+  if(total===0){
+    banner.className='comp-banner warn';
+    banner.innerHTML='<span class="ico">⚠</span><div><strong>No employees in system</strong><br>Add employees to begin tracking NEO completion.</div>';
+  } else if(overdue===0&&incomplete===0){
+    banner.className='comp-banner ok';
+    banner.innerHTML=`<span class="ico">✓</span><div><strong>All NEO checklists complete (${pct}%)</strong><br>All employees have completed or are exempt from the NEO checklist. Continue monitoring new hires.</div>`;
+  } else {
+    banner.className='comp-banner warn';
+    banner.innerHTML=`<span class="ico">⚠</span><div><strong>${overdue} overdue · ${incomplete} pending · ${pct}% overall completion</strong><br>${overdue>0?`${overdue} employee(s) have passed the 14-day window without completing NEO. `:''} ${incomplete>0?`${incomplete} employee(s) have pending checklists.`:''}</div>`;
+  }
+}
+
+/* ── Modals ── */
+function openAddModal(){
+  editIdx=-1;
+  document.getElementById('modalTitle').textContent='Add Employee';
+  document.getElementById('modalSaveBtn').textContent='Add Employee';
+  ['fFirst','fLast','fJobTitle','fEmail','fDept','fManager','fCost','fFileRef'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSite').value='';
+  document.getElementById('fStatus').value='Incomplete';
+  document.getElementById('fCompletedDate').value='';
+  document.getElementById('fHireDate').value=new Date().toISOString().slice(0,10);
+  // populate manager datalist from existing data
+  const mgrs = [...new Set(db.map(e=>e.manager).filter(Boolean))].sort();
+  document.getElementById('mgr-list').innerHTML = mgrs.map(m=>`<option value="${esc(m)}">`).join('');
+  // attach auto-email handler
+  const updateEmail = ()=>{
+    const f = document.getElementById('fFirst').value.trim();
+    const l = document.getElementById('fLast').value.trim();
+    const emailField = document.getElementById('fEmail');
+    if(f && l && (!emailField.dataset.userEdited || emailField.dataset.userEdited==='false')){
+      emailField.value = capEmail(f, l);
+    }
+  };
+  document.getElementById('fFirst').oninput = updateEmail;
+  document.getElementById('fLast').oninput = updateEmail;
+  document.getElementById('fEmail').oninput = function(){ this.dataset.userEdited = 'true'; };
+  document.getElementById('fEmail').dataset.userEdited = 'false';
+  document.getElementById('empModal').classList.add('open');
+  document.getElementById('fFirst').focus();
+}
+function openEditModal(idx){
+  editIdx=idx;
+  const e=db[idx];
+  document.getElementById('modalTitle').textContent='Edit Employee';
+  document.getElementById('modalSaveBtn').textContent='Save Changes';
+  document.getElementById('fFirst').value=e.firstName||'';
+  document.getElementById('fLast').value=e.lastName||'';
+  document.getElementById('fJobTitle').value=e.jobTitle||'';
+  document.getElementById('fEmail').value=e.email||'';
+  document.getElementById('fSite').value=e.site||'';
+  document.getElementById('fDept').value=e.department||'';
+  document.getElementById('fManager').value=e.manager||'';
+  document.getElementById('fCost').value=e.costCentre||'';
+  document.getElementById('fHireDate').value=e.hireDate||'';
+  document.getElementById('fStatus').value=e.status||'Incomplete';
+  document.getElementById('fCompletedDate').value=e.completedDate||'';
+  document.getElementById('fFileRef').value=e.completedFile||'';
+  document.getElementById('empModal').classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function openAttachment(filename){
+  alert(`Opening: ${filename}\n\nIn production, this link would open the file from Fraser Health's secure document storage (e.g., SharePoint or Azure Blob Storage).`);
+}
+
+/* ── Classify Pre-System ── */
+let clIdx = -1;
+function openClassifyModal(idx){
+  clIdx = idx;
+  document.getElementById('clName').textContent = db[idx].firstName+' '+db[idx].lastName;
+  document.querySelectorAll('input[name=clAction]').forEach(r=>r.checked=false);
+  document.getElementById('clRecordsLoc').value = db[idx].recordsLocation || '';
+  document.getElementById('clNotes').value = '';
+  document.getElementById('clRecordsLocWrap').style.display = 'none';
+  document.getElementById('clSaveBtn').disabled = true;
+  document.getElementById('classifyModal').classList.add('open');
+}
+function updateClassifyChoice(){
+  const sel = document.querySelector('input[name=clAction]:checked');
+  if(!sel) return;
+  document.getElementById('clRecordsLocWrap').style.display = sel.value === 'records' ? 'block' : 'none';
+  document.getElementById('clSaveBtn').disabled = false;
+  document.querySelectorAll('input[name=clAction]').forEach(r=>{
+    r.closest('label').style.borderColor = r.checked ? '#7c3aed' : 'var(--slate-200)';
+    r.closest('label').style.background = r.checked ? '#faf5ff' : '#fff';
+  });
+}
+function saveClassification(){
+  const sel = document.querySelector('input[name=clAction]:checked');
+  if(!sel) return;
+  const e = db[clIdx];
+  if(sel.value === 'records'){
+    e.status = 'Pre-System — Records on File';
+    e.recordsLocation = document.getElementById('clRecordsLoc').value.trim();
+  } else {
+    e.status = 'Pre-System — Pending Refresher';
+  }
+  e.classifiedAt = new Date().toISOString();
+  e.classifyNotes = document.getElementById('clNotes').value.trim();
+  e.dateModified = new Date().toISOString();
+  persist();
+  closeModal('classifyModal');
+  render();
+}
+
+function openHelp(){ document.getElementById('helpModal').classList.add('open'); }
+
+/* ── Revise Flow ── */
+let rvIdx = -1;
+let rvSelectedFile = null;
+let rvAction = '';
+
+function openReviseModal(idx){
+  rvIdx = idx;
+  rvSelectedFile = null;
+  rvAction = '';
+  const e = db[idx];
+  document.getElementById('rvName').textContent = e.firstName+' '+e.lastName;
+  document.getElementById('rvCurDate').textContent = fmtDate(e.completedDate) || '—';
+  document.getElementById('rvCurFile').textContent = e.completedFile || '—';
+  document.getElementById('rvCurSubmit').textContent = e.dateModified ? new Date(e.dateModified).toLocaleString() : '—';
+  // Reset form state
+  document.querySelectorAll('input[name=rvAction]').forEach(r=>r.checked=false);
+  document.getElementById('rvAckBox').checked = false;
+  document.getElementById('rvContinueBtn').disabled = true;
+  document.getElementById('rvContinueBtn').textContent = 'Continue';
+  document.getElementById('reviseStep1').style.display = 'block';
+  document.getElementById('reviseStep2').style.display = 'none';
+  document.getElementById('reviseStep2Revert').style.display = 'none';
+  document.getElementById('reviseTitle').textContent = 'Revise Submission';
+  document.getElementById('rvDate').value = e.completedDate || '';
+  document.getElementById('rvReason').value = '';
+  document.getElementById('rvRevertReason').value = '';
+  clearReviseFile();
+  document.getElementById('reviseModal').classList.add('open');
+}
+
+function updateReviseChoice(){
+  const sel = document.querySelector('input[name=rvAction]:checked');
+  rvAction = sel ? sel.value : '';
+  document.getElementById('rvContinueBtn').disabled = !rvAction || !document.getElementById('rvAckBox').checked;
+  // visual highlight
+  document.querySelectorAll('input[name=rvAction]').forEach(r=>{
+    r.closest('label').style.borderColor = r.checked ? (r.value==='revert'?'var(--red)':'var(--blue)') : 'var(--slate-200)';
+    r.closest('label').style.background = r.checked ? (r.value==='revert'?'#fef2f2':'var(--blue-light)') : '#fff';
+  });
+}
+
+function reviseStepTwo(){
+  document.getElementById('reviseStep1').style.display = 'none';
+  if(rvAction === 'correct'){
+    document.getElementById('reviseStep2').style.display = 'block';
+    document.getElementById('reviseTitle').textContent = 'Correct Submission Details';
+    document.getElementById('rvContinueBtn').textContent = 'Save Correction';
+    document.getElementById('rvContinueBtn').onclick = saveRevisionCorrect;
+    document.getElementById('rvContinueBtn').disabled = false;
+  } else if(rvAction === 'revert'){
+    document.getElementById('reviseStep2Revert').style.display = 'block';
+    document.getElementById('reviseTitle').textContent = 'Revert to Incomplete';
+    document.getElementById('rvContinueBtn').textContent = 'Confirm Revert';
+    document.getElementById('rvContinueBtn').className = 'btn';
+    document.getElementById('rvContinueBtn').style.background = 'var(--red)';
+    document.getElementById('rvContinueBtn').style.color = '#fff';
+    document.getElementById('rvContinueBtn').onclick = saveRevisionRevert;
+    document.getElementById('rvContinueBtn').disabled = false;
+  }
+}
+
+function saveRevisionCorrect(){
+  const newDate = document.getElementById('rvDate').value;
+  const reason = document.getElementById('rvReason').value.trim();
+  if(!newDate){ alert('Please enter a completion date.'); return; }
+  if(!reason){ alert('A reason for the revision is required for audit purposes.'); return; }
+  const e = db[rvIdx];
+  // Audit log
+  e.auditLog = e.auditLog || [];
+  e.auditLog.push({
+    type:'Correction',
+    timestamp:new Date().toISOString(),
+    previous:{completedDate:e.completedDate, completedFile:e.completedFile},
+    new:{completedDate:newDate, completedFile:rvSelectedFile?rvSelectedFile.name:e.completedFile},
+    reason:reason
+  });
+  // Apply changes
+  e.completedDate = newDate;
+  if(rvSelectedFile) e.completedFile = rvSelectedFile.name;
+  e.dateModified = new Date().toISOString();
+  persist();
+  closeModal('reviseModal');
+  resetReviseBtn();
+  render();
+  alert('Correction saved. The change has been recorded in the audit log.');
+}
+
+function saveRevisionRevert(){
+  const reason = document.getElementById('rvRevertReason').value.trim();
+  if(!reason || reason.length<10){ alert('Please provide a detailed reason (at least 10 characters) for reverting this submission.'); return; }
+  const e = db[rvIdx];
+  e.auditLog = e.auditLog || [];
+  e.auditLog.push({
+    type:'Revert',
+    timestamp:new Date().toISOString(),
+    previous:{status:'Complete', completedDate:e.completedDate, completedFile:e.completedFile},
+    new:{status:'Incomplete'},
+    reason:reason
+  });
+  e.status = 'Incomplete';
+  e.completedDate = '';
+  e.completedFile = '';
+  e.dateModified = new Date().toISOString();
+  persist();
+  closeModal('reviseModal');
+  resetReviseBtn();
+  render();
+  alert('Submission reverted to Incomplete. The action has been recorded in the audit log.');
+}
+
+function resetReviseBtn(){
+  const btn = document.getElementById('rvContinueBtn');
+  btn.className = 'btn btn-primary';
+  btn.style.background = '';
+  btn.style.color = '';
+  btn.onclick = reviseStepTwo;
+}
+
+function handleReviseFileSelect(e){ const f = e.target.files[0]; if(f) setReviseFile(f); }
+function handleReviseDrop(e){
+  e.preventDefault();
+  document.getElementById('rvDropZone').style.borderColor='var(--slate-200)';
+  document.getElementById('rvDropZone').style.background='var(--slate-50)';
+  const f = e.dataTransfer.files[0]; if(f) setReviseFile(f);
+}
+function setReviseFile(f){
+  rvSelectedFile = f;
+  document.getElementById('rvDropZone').style.display='none';
+  const prev = document.getElementById('rvFilePreview');
+  prev.style.display='flex';
+  document.getElementById('rvFileName').textContent = f.name;
+  document.getElementById('rvFileSize').textContent = f.size>1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB';
+}
+function clearReviseFile(){
+  rvSelectedFile = null;
+  document.getElementById('rvFileInput').value='';
+  document.getElementById('rvFilePreview').style.display='none';
+  document.getElementById('rvDropZone').style.display='block';
+}
+
+function openResetConfirm(){
+  document.getElementById('resetModal').classList.add('open');
+}
+
+function confirmReset(){
+  closeModal('resetModal');
+  localStorage.removeItem('neo_tracker_v3');
+  localStorage.removeItem('neo_tracker_v2');
+  const today=new Date().toISOString().slice(0,10);
+  const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
+  db.length = 0;
+  db.push(
+    {firstName:'Sarah',lastName:'Chen',jobTitle:'Registered Nurse',email:'Sarah.Chen@fraserhealth.ca',site:'Royal Columbian Hospital',department:'Emergency Department',manager:'James Okafor',costCentre:'CC-4210',hireDate:d(-20),dueDate:d(-6),status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Marco',lastName:'Rivera',jobTitle:'Lab Technician',email:'Marco.Rivera@fraserhealth.ca',site:'Royal Columbian Hospital',department:'Laboratory Services',manager:'James Okafor',costCentre:'CC-4210',hireDate:d(-5),dueDate:d(9),status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Priya',lastName:'Sharma',jobTitle:'Support Worker',email:'Priya.Sharma@fraserhealth.ca',site:'Surrey Memorial Hospital',department:'Mental Health',manager:'Linda Tran',costCentre:'CC-3301',hireDate:d(-3),dueDate:d(11),status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'David',lastName:'Kowalski',jobTitle:'Physiotherapist',email:'David.Kowalski@fraserhealth.ca',site:'Burnaby Hospital',department:'Rehabilitation',manager:'Susan Park',costCentre:'CC-2190',hireDate:d(-30),dueDate:d(-16),status:'Complete',completedDate:d(-18),completedFile:'NEO_DKowalski_completed.pdf',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Amy',lastName:'Johnson',jobTitle:'Unit Clerk',email:'Amy.Johnson@fraserhealth.ca',site:'Abbotsford Regional Hospital',department:'Medical Imaging',manager:'Robert Gill',costCentre:'CC-1050',hireDate:d(-12),dueDate:d(2),status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Kevin',lastName:'Nguyen',jobTitle:'Respiratory Therapist',email:'Kevin.Nguyen@fraserhealth.ca',site:'Surrey Memorial Hospital',department:'ICU',manager:'Linda Tran',costCentre:'CC-3301',hireDate:d(-45),dueDate:d(-31),status:'Complete',completedDate:d(-33),completedFile:'NEO_KNguyen.pdf',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Fatima',lastName:'Al-Rashid',jobTitle:'Pharmacy Technician',email:'Fatima.Al-Rashid@fraserhealth.ca',site:'Langley Memorial Hospital',department:'Pharmacy',manager:'Michael Holt',costCentre:'CC-5510',hireDate:d(-2),dueDate:d(12),status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+    {firstName:'Tom',lastName:'MacLeod',jobTitle:'Maintenance Technician',email:'Tom.MacLeod@fraserhealth.ca',site:'Royal Columbian Hospital',department:'Facilities',manager:'James Okafor',costCentre:'CC-4210',hireDate:d(-60),dueDate:d(-46),status:'Not Required',completedDate:'',completedFile:'',notes:'Volunteer role',dateAdded:today,dateModified:today}
+  );
+  persist();
+  render();
+}
+
+function resetData(){
+  openResetConfirm();
+}
+
+/* ── Help ── */
+function setHelpTab(btn){
+  document.querySelectorAll('.help-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.help-content').forEach(c=>c.style.display='none');
+  document.getElementById('help-'+btn.dataset.tab).style.display='block';
+}
+
+let selectedFile = null;
+
+function handleFileSelect(e){
+  const f = e.target.files[0]; if(!f) return;
+  setFile(f);
+}
+function handleDragOver(e){
+  e.preventDefault();
+  document.getElementById('dropZone').style.borderColor='var(--blue)';
+  document.getElementById('dropZone').style.background='var(--blue-light)';
+}
+function handleDragLeave(e){
+  document.getElementById('dropZone').style.borderColor='var(--slate-200)';
+  document.getElementById('dropZone').style.background='var(--slate-50)';
+}
+function handleDrop(e){
+  e.preventDefault();
+  handleDragLeave(e);
+  const f = e.dataTransfer.files[0]; if(!f) return;
+  setFile(f);
+}
+function setFile(f){
+  selectedFile = f;
+  document.getElementById('dropZone').style.display='none';
+  const prev = document.getElementById('filePreview');
+  prev.style.display='flex';
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileSize').textContent = f.size>1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB';
+}
+function clearFile(){
+  selectedFile = null;
+  document.getElementById('cmpFileInput').value='';
+  document.getElementById('filePreview').style.display='none';
+  document.getElementById('dropZone').style.display='block';
+}
+
+function openCompleteModal(idx){
+  cmpIdx=idx;
+  document.getElementById('cmpName').textContent=db[idx].firstName+' '+db[idx].lastName;
+  document.getElementById('cmpDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('cmpNotes').value='';
+  clearFile();
+  document.getElementById('completeModal').classList.add('open');
+}
+
+function saveCompletion(){
+  const d=document.getElementById('cmpDate').value;
+  if(!d){alert('Please enter the date completed.');return;}
+  if(!selectedFile){alert('Please upload the completed NEO checklist before submitting.');return;}
+  db[cmpIdx].status='Complete';
+  db[cmpIdx].completedDate=d;
+  db[cmpIdx].completedFile=selectedFile.name;
+  db[cmpIdx].notes=document.getElementById('cmpNotes').value.trim();
+  db[cmpIdx].dateModified=new Date().toISOString();
+  persist(); closeModal('completeModal'); render();
+}
+
+/* ── Export ── */
+function exportCSV(){
+  if(!db.length){
+    alert('No data to export. Add employees to the register first.');
+    return;
+  }
+  try {
+    const hdr = ['First Name','Last Name','Email','Job Title','Facility','Cost Centre','Manager','Hire Date','Due Date','Status','Completed Date','Checklist File','Date Added'];
+    const rows = db.map(e => [
+      e.firstName||'',
+      e.lastName||'',
+      e.email||'',
+      e.jobTitle||'',
+      e.site||'',
+      e.costCentre||'',
+      e.manager||'',
+      e.hireDate||'',
+      e.dueDate||'',
+      getStatus(e),
+      e.completedDate||'',
+      e.completedFile||'',
+      e.dateAdded||''
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`));
+    const csv = [hdr.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\r\n');
+    const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `NEO_Tracker_${new Date().toISOString().slice(0,10)}.csv`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 500);
+  } catch(err) {
+    console.error('Export failed:', err);
+    alert('Export failed. Please try again or contact IT support.\n\nError: ' + err.message);
+  }
+}
+
+/* ── Events ── */
+document.querySelectorAll('.backdrop').forEach(b=>{
+  b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open');});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.backdrop.open').forEach(b=>b.classList.remove('open'));});
+
+/* ── Seed Data ── */
+{
+  const today=new Date().toISOString().slice(0,10);
+  if(db.length===0){
+    db.push(
+      // Pre-System Complete (hired before 2026-06-01 launch date)
+      {firstName:'Joel',lastName:'Odin',jobTitle:'Nurse',email:'joel.odin@fraserhealth.ca',site:'ARH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.121',employmentStatus:'Active',hireDate:'2004-09-29',dueDate:'',status:'',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+      {firstName:'Jackie',lastName:'Ellis',jobTitle:'Care Aid',email:'jackie.ellis2@fraserhealth.ca',site:'ARH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.121',employmentStatus:'Active',hireDate:'2013-10-11',dueDate:'',status:'',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+      // Complete with attached checklist file
+      {firstName:'Dale',lastName:'Min',jobTitle:'Care Aid',email:'Dale.min@fraserhealth.ca',site:'BUH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.121',employmentStatus:'Active',hireDate:'2025-07-29',dueDate:'2025-08-12',status:'Complete',completedDate:'2025-08-05',completedFile:'NEO_DMin_completed.pdf',notes:'',dateAdded:today,dateModified:today},
+      // Incomplete (In Progress mapped to Incomplete)
+      {firstName:'Rita',lastName:'Ciconte',jobTitle:'Nurse',email:'Rita.ciconte@fraserhealth.ca',site:'BUH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.121',employmentStatus:'Active',hireDate:'2026-07-29',dueDate:'2026-08-12',status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today},
+      // Complete with attached checklist file
+      {firstName:'Remi',lastName:'Adejumo',jobTitle:'Physio',email:'Remi.adejumo@fraserhealth.ca',site:'ARH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.333',employmentStatus:'Active',hireDate:'2026-07-29',dueDate:'2026-08-12',status:'Complete',completedDate:'2026-08-01',completedFile:'NEO_RAdejumo_completed.pdf',notes:'',dateAdded:today,dateModified:today},
+      // Overdue (calculated automatically from dates — hired Feb 28 2026, due Mar 14 2026, past due)
+      {firstName:'Sheile',lastName:'Mallari',jobTitle:'Nurse',email:'sheile.mallari@fraserhealth.ca',site:'BUH',department:'',manager:'Quinn Danyluk',costCentre:'960.71.333',employmentStatus:'Active',hireDate:'2026-02-28',dueDate:'2026-03-14',status:'Incomplete',completedDate:'',completedFile:'',notes:'',dateAdded:today,dateModified:today}
+    );
+    persist();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
